@@ -4,10 +4,10 @@ const stringCheck = createValidator("string");
 const numberCheck = createValidator("number");
 const booleanCheck = createValidator("boolean");
 const objectCheck = createValidator({
-  name: "string",
-  age: "number",
+  string: "string",
+  number: "number",
 });
-const arrayCheck = createValidator(["string"]);
+const arrayCheck = createValidator(["string", "number"]);
 
 Deno.bench("Strings", () => {
   stringCheck("Str");
@@ -21,10 +21,10 @@ Deno.bench("Booleans", () => {
   booleanCheck(true);
 });
 
-Deno.bench("Objects (name: string, age: number)", () => {
-  objectCheck({ name: "Str", age: 1 });
+Deno.bench("Objects (string: string, number: number)", () => {
+  objectCheck({ string: "Str", number: 1 });
 });
 
 Deno.bench("Arrays (string, number)", () => {
-  arrayCheck(["Str1", "Str2"]);
+  arrayCheck(["Str1", 1]);
 });
