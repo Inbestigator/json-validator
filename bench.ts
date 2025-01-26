@@ -2,7 +2,7 @@ import { createValidator as objCreate } from "./obj.ts";
 import { createValidator as oldCreate } from "./old.ts";
 import { createValidator as ifCreate } from "./if.ts";
 import stnl from "stnl";
-import build from "stnl/compilers/validate-json/compose.js";
+import { build } from "stnl/compilers/validate-json/index.js";
 import { ValiPart } from "./utils.ts";
 
 const mySchema: ValiPart = [
@@ -24,32 +24,29 @@ const objIsUser = objCreate(mySchema);
 const ifIsUser = ifCreate(mySchema);
 const oldIsUser = oldCreate(mySchema);
 const StnlUser = stnl({
-  values: [
-    {
-      props: {
-        id: "i16",
-        author: {
-          props: {
-            name: "string",
-            email: "string",
-            age: "i16",
-            posts: {
-              values: ["i16"],
-            },
+  items: {
+    props: {
+      id: "i16",
+      author: {
+        props: {
+          name: "string",
+          email: "string",
+          age: "i16",
+          posts: {
+            items: "f32",
           },
         },
-        title: "string",
-        published: "bool",
-        tags: {
-          values: ["string"],
-        },
+      },
+      title: "string",
+      published: "bool",
+      tags: {
+        items: "string",
       },
     },
-  ],
+  },
 });
 const stnlIsUser = build(StnlUser);
 
-// Each array only has one, because the STNL schemaing for arrays is rather confusing to me
 const usage = [
   {
     id: 1,
@@ -57,11 +54,23 @@ const usage = [
       name: "John",
       email: "a@a.com",
       age: 30,
-      posts: [1],
+      posts: [1, 2],
     },
     title: "Hello world",
     published: true,
-    tags: ["foo"],
+    tags: ["foo", "bar"],
+  },
+  {
+    id: 2,
+    author: {
+      name: "John",
+      email: "a@a.com",
+      age: 30,
+      posts: [1, 2],
+    },
+    title: "An original title",
+    published: false,
+    tags: ["bazz"],
   },
 ];
 

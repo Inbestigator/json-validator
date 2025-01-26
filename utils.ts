@@ -17,13 +17,13 @@ export type Obj = {
 } | {
   isOptional?: boolean;
   type: "string";
-  min: number;
-  max: number;
+  min?: number;
+  max?: number;
 } | {
   isOptional?: boolean;
   type: "number";
-  min: number;
-  max: number;
+  min?: number;
+  max?: number;
 } | {
   isOptional?: boolean;
   type: "object";
@@ -76,17 +76,17 @@ function parseRange(
   args: string[],
   defaultMin: number,
   defaultMax: number,
-): { min: number; max: number } {
+): { min?: number; max?: number } {
   const min = args[1] === "?"
     ? defaultMin
     : args[1]
     ? parseInt(args[1], 10)
-    : defaultMin;
+    : undefined;
   const max = args[2] === "?"
     ? defaultMax
     : args[2]
     ? parseInt(args[2], 10)
-    : defaultMax;
+    : undefined;
   return { min, max };
 }
 

@@ -33,15 +33,18 @@ export function createValidator(part: ValiPart) {
       }
       case "string": {
         if (
-          typeof data !== "string" || data.length < part.min ||
-          data.length > part.max
+          typeof data !== "string" || data.length < (part.min ?? 0) ||
+          data.length > (part.max ?? Infinity)
         ) {
           throw new Error("Invalid string");
         }
         break;
       }
       case "number": {
-        if (typeof data !== "number" || data < part.min || data > part.max) {
+        if (
+          typeof data !== "number" || data < (part.min ?? -Infinity) ||
+          data > (part.max ?? Infinity)
+        ) {
           throw new Error("Invalid number");
         }
         break;

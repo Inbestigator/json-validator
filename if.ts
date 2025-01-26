@@ -3,62 +3,90 @@ import { createObj, type Obj, type ValiPart } from "./utils.ts";
 export function createValidator(part: ValiPart) {
   const obj = createObj(part);
 
-  function generateIfStatement(obj: Obj, path = "data"): string {
+  /**
+   * Quickly make sure that data is in the correct form before going more specific
+   */
+  function generatePreliminaryIf(obj: Obj, path = "data"): string {
+    switch (obj.type) {
+      case "array":
+        return `Array.isArray(${path})`;
+      case "object":
+        return `typeof ${path} === 'object' && ${path} !== null`;
+      default:
+        return `typeof ${path} === '${obj.type}'`;
+    }
+  }
+
+  /**
+   * Specific checks, e.g. length, min, max
+   */
+  function generateGranularIf(obj: Obj, path = "data"): string {
     switch (obj.type) {
       case "string": {
         const conditions = [
-          `typeof ${path} === 'string'`,
-          `(${path}.length >= ${obj.min})`,
-          `(${path}.length <= ${obj.max})`,
+          obj.min ? `${path}.length >= ${obj.min}` : undefined,
+          obj.max ? `${path}.length <= ${obj.max}` : undefined,
         ];
-        return obj.isOptional
-          ? `(${path} === undefined || (${conditions.join(" && ")}))`
-          : conditions.join(" && ");
+        const filtered = conditions.filter((c) => c !== undefined);
+        return filtered.length === 0 ? "true" : filtered.join(" && ");
       }
       case "number": {
         const conditions = [
-          `typeof ${path} === 'number'`,
-          `(${path} >= ${obj.min})`,
-          `(${path} <= ${obj.max})`,
+          obj.min ? `${path} >= ${obj.min}` : undefined,
+          obj.max ? `${path} <= ${obj.max}` : undefined,
         ];
-        return obj.isOptional
-          ? `(${path} === undefined || (${conditions.join(" && ")}))`
-          : conditions.join(" && ");
-      }
-      case "boolean": {
-        return obj.isOptional
-          ? `(${path} === undefined || typeof ${path} === 'boolean')`
-          : `typeof ${path} === 'boolean'`;
+        const filtered = conditions.filter((c) => c !== undefined);
+        return filtered.length === 0 ? "true" : filtered.join(" && ");
       }
       case "array": {
         if (obj.items.length === 1) {
-          return `Array.isArray(${path}) && ${path}.every((item) => (${
-            generateIfStatement(obj.items[0], "item")
-          }))`;
+          return `${path}.every(item => ${
+            generateIfStatement(
+              obj.items[0],
+              "item",
+            )
+          })`;
         }
         const itemConditions = obj.items
           .map((item, index) => generateIfStatement(item, `${path}[${index}]`))
           .join(" && ");
-        return `Array.isArray(${path}) && (${itemConditions}) && (${path}.length === ${obj.items.length})`;
+        return `${itemConditions} && ${path}.length === ${obj.items.length}`;
       }
       case "object": {
         const propertyConditions = obj.items
           .map(
             ({ key, schema }) =>
-              `(${path}.${key} !== undefined && ${
+              `${
                 generateIfStatement(
                   schema,
                   `${path}.${key}`,
                 )
-              })`,
+              }`,
           )
           .join(" && ");
-        return `typeof ${path} === 'object' && ${path} !== null && (${propertyConditions})`;
+        return propertyConditions;
       }
+      default:
+        return "true";
     }
   }
 
-  return new Function("data", `return ${generateIfStatement(obj)};`) as (
-    data: unknown,
-  ) => boolean;
+  function generateIfStatement(obj: Obj, path = "data"): string {
+    const preliminaryCondition = generatePreliminaryIf(obj, path);
+    const granularCondition = generateGranularIf(obj, path);
+
+    if (obj.isOptional) {
+      return `${path} === undefined || (${preliminaryCondition}${
+        granularCondition !== "true" ? ` && ${granularCondition}` : ""
+      })`;
+    }
+    return `${preliminaryCondition}${
+      granularCondition !== "true" ? ` && ${granularCondition}` : ""
+    }`;
+  }
+
+  return Function(
+    "data",
+    `'use strict';return ${generateIfStatement(obj)};`,
+  ) as (data: unknown) => boolean;
 }
