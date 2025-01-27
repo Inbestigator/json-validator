@@ -1,6 +1,7 @@
 # Vali
 
-A swift, tiny JSON schema validator.
+Vali is a quick, 0 dependency JSON schema validator. It's designed to be lightning quick
+and let you make your schemas in a Typescript-familiar way.
 
 ```ts
 import createValidator, { type ValiPart } from "@inbestigator/vali";
@@ -8,13 +9,21 @@ import createValidator, { type ValiPart } from "@inbestigator/vali";
 const userSchema: ValiPart = {
   id: "number",
   username: "string:3:32",
-  email: "string?",
+  email: "string",
+  isVerified: "boolean?",
 };
 
 const isUser = createValidator(userSchema);
 
-console.log(isUser({ id: 1, username: "Alice", email: "alice@example.com" }));
-console.log(isUser({ id: 2, username: "Bob" }));
+console.log(
+  isUser({
+    id: 1,
+    username: "Alice",
+    email: "alice@example.com",
+    isVerified: true,
+  }),
+);
+console.log(isUser({ id: 2, username: "Bob", email: "bob@example.com" }));
 ```
 
 ## Base types
@@ -27,7 +36,7 @@ console.log(isUser({ id: 2, username: "Bob" }));
 {...}
 ```
 
-## Argument parts:
+## Arguments
 
 ```ts
 "string:minimum_length:maximum_length";
