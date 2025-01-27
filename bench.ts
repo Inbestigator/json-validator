@@ -1,9 +1,7 @@
-import { createValidator as objCreate } from "./obj.ts";
-import { createValidator as oldCreate } from "./old.ts";
-import { createValidator as ifCreate } from "./if.ts";
+import createValidator from "./mod.ts";
 import stnl from "stnl";
 import { build } from "stnl/compilers/validate-json/index.js";
-import { ValiPart } from "./utils.ts";
+import type { ValiPart } from "./utils.ts";
 
 const mySchema: ValiPart = [
   {
@@ -20,9 +18,7 @@ const mySchema: ValiPart = [
   },
 ];
 
-const objIsUser = objCreate(mySchema);
-const ifIsUser = ifCreate(mySchema);
-const oldIsUser = oldCreate(mySchema);
+const isUser = createValidator(mySchema);
 const StnlUser = stnl({
   items: {
     props: {
@@ -74,23 +70,13 @@ const usage = [
   },
 ];
 
-Deno.bench("Old", () => {
-  oldIsUser(usage);
-});
-
-Deno.bench("If", () => {
-  ifIsUser(usage);
-});
-
-Deno.bench("Obj", () => {
-  objIsUser(usage);
+Deno.bench("Vali", () => {
+  isUser(usage);
 });
 
 Deno.bench("Stnl", () => {
   stnlIsUser(usage);
 });
 
-console.log("Old:", oldIsUser(usage));
-console.log("If:", ifIsUser(usage));
-console.log("Obj:", objIsUser(usage));
+console.log("Vali:", isUser(usage));
 console.log("Stnl:", stnlIsUser(usage));

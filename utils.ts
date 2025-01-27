@@ -34,6 +34,16 @@ export type Obj = {
   items: Obj[];
 };
 
+/**
+ * Constructs a specialized schema part based on the given base or optional type
+ * and its constraints. For "string" or "string?" types, accepts minimum and maximum
+ * length constraints. For "number" or "number?" types, accepts minimum and maximum
+ * value constraints. Returns a ValiPart string representation of the schema part.
+ * @param type - The base or optional type to specialize.
+ * @param args - The constraints specific to the type, such as min/max length for strings or min/max value for numbers.
+ * @returns A ValiPart string representation of the specialized schema part.
+ * @throws Will throw an error if an unexpected type is provided.
+ */
 export function specialize<T extends BaseTypes | OptionalTypes>(
   type: T,
   args: T extends "string" | "string?" ? {
@@ -68,7 +78,7 @@ export function specialize<T extends BaseTypes | OptionalTypes>(
       }`;
     }
     default:
-      throw new Error("unexpected type");
+      throw new Error("Unexpected type");
   }
 }
 
@@ -90,6 +100,13 @@ function parseRange(
   return { min, max };
 }
 
+/**
+ * Converts a ValiPart schema definition into an Obj representation.
+ * Handles string, array, and object types, and supports optional fields.
+ * @param {ValiPart} part - The schema definition which can be a string, array, or object.
+ * @returns The converted Obj representation of the schema.
+ * @throws Throws an error if an unexpected type is encountered.
+ */
 export function createObj(part: ValiPart): Obj {
   if (typeof part === "string") {
     const args = part.split(":");

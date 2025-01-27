@@ -1,4 +1,4 @@
-import { createValidator } from "./if.ts";
+import createValidator from "./mod.ts";
 
 const stringCheck = createValidator("string");
 const numberCheck = createValidator("number");

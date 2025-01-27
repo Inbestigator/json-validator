@@ -1,6 +1,15 @@
-import { createObj, type Obj, type ValiPart } from "./utils.ts";
+import { createObj, type Obj, specialize, type ValiPart } from "./utils.ts";
 
-export function createValidator<T extends boolean = false>(
+export { createObj, specialize, type ValiPart };
+
+/**
+ * Given a schema, returns a function that takes some data and returns whether it matches the schema.
+ * If the second argument is true, returns a string that can be used in a conditional statement to check whether data matches the schema.
+ * @param {ValiPart} part - The schema to validate against
+ * @param {boolean} [clausesOnly] - If true, returns a string that can be used in a conditional statement
+ * @returns - A function that takes some data and returns whether it matches the schema
+ */
+export default function createValidator<T extends boolean = false>(
   part: ValiPart,
   clausesOnly?: T,
 ): T extends true ? string
