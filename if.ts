@@ -1,6 +1,10 @@
 import { createObj, type Obj, type ValiPart } from "./utils.ts";
 
-export function createValidator(part: ValiPart) {
+export function createValidator<T extends boolean = false>(
+  part: ValiPart,
+  clausesOnly?: T,
+): T extends true ? string
+  : (data: unknown) => boolean {
   const obj = createObj(part);
 
   /**
@@ -85,8 +89,12 @@ export function createValidator(part: ValiPart) {
     }`;
   }
 
+  if (clausesOnly === true) {
+    return generateIfStatement(obj) as ReturnType<typeof createValidator<T>>;
+  }
+
   return Function(
     "data",
     `'use strict';return ${generateIfStatement(obj)};`,
-  ) as (data: unknown) => boolean;
+  ) as ReturnType<typeof createValidator<T>>;
 }
