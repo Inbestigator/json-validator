@@ -52,6 +52,9 @@ export default function createValidator<T extends boolean = false>(
         return filtered.length === 0 ? "true" : filtered.join(" && ");
       }
       case "array": {
+        if (obj.items.length === 0) {
+          return `${path}.length === 0`;
+        }
         if (obj.items.length === 1) {
           return `${path}.every(item => ${
             generateIfStatement(
@@ -66,6 +69,9 @@ export default function createValidator<T extends boolean = false>(
         return `${itemConditions} && ${path}.length === ${obj.items.length}`;
       }
       case "object": {
+        if (obj.items.length === 0) {
+          return "true";
+        }
         const propertyConditions = obj.items
           .map(
             ({ key, schema }) =>
@@ -93,9 +99,9 @@ export default function createValidator<T extends boolean = false>(
         granularCondition !== "true" ? ` && ${granularCondition}` : ""
       })`;
     }
-    return `${preliminaryCondition}${
+    return `(${preliminaryCondition}${
       granularCondition !== "true" ? ` && ${granularCondition}` : ""
-    }`;
+    })`;
   }
 
   if (clausesOnly === true) {

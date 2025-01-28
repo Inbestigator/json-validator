@@ -1,7 +1,7 @@
 # Vali
 
-Vali is a quick, 0 dependency JSON schema validator. It's designed to be lightning quick
-and let you make your schemas in a Typescript-familiar way.
+Vali is a quick, 0 dependency JSON schema validator. It's designed to be
+lightning quick and let you make your schemas in a Typescript-familiar way.
 
 ```ts
 import createValidator, { type ValiPart } from "@inbestigator/vali";

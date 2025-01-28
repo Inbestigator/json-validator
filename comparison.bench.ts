@@ -77,6 +77,3 @@ Deno.bench("Vali", () => {
 Deno.bench("Stnl", () => {
   stnlIsUser(usage);
 });
-
-console.log("Vali:", isUser(usage));
-console.log("Stnl:", stnlIsUser(usage));
