@@ -11,28 +11,33 @@ export type ValiPart =
   }
   | ValiPart[];
 
-export type Obj = {
-  isOptional?: boolean;
-  type: "boolean";
-} | {
-  isOptional?: boolean;
-  type: "string";
-  min?: number;
-  max?: number;
-} | {
-  isOptional?: boolean;
-  type: "number";
-  min?: number;
-  max?: number;
-} | {
-  isOptional?: boolean;
-  type: "object";
-  items: { key: string; schema: Obj }[];
-} | {
-  isOptional?: boolean;
-  type: "array";
-  items: Obj[];
-};
+export type Obj =
+  & { isOptional?: boolean }
+  & (
+    | {
+      type: "boolean";
+    }
+    | {
+      min?: number;
+      max?: number;
+    }
+      & (
+        | {
+          type: "string";
+        }
+        | {
+          type: "number";
+        }
+      )
+    | {
+      type: "object";
+      items: { key: string; schema: Obj }[];
+    }
+    | {
+      type: "array";
+      items: Obj[];
+    }
+  );
 
 /**
  * Constructs a specialized schema part based on the given base or optional type

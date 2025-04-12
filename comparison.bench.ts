@@ -1,9 +1,9 @@
 import createValidator from "./mod.ts";
 import stnl from "stnl";
 import { build } from "stnl/compilers/validate-json/index.js";
-import type { ValiPart } from "./utils.ts";
+import { type } from "arktype";
 
-const mySchema: ValiPart = [
+const isUser = createValidator([
   {
     id: "number",
     author: {
@@ -16,11 +16,10 @@ const mySchema: ValiPart = [
     published: "boolean",
     tags: ["string"],
   },
-];
+]);
 
-const isUser = createValidator(mySchema);
 const StnlUser = stnl({
-  items: {
+  item: {
     props: {
       id: "i16",
       author: {
@@ -29,19 +28,31 @@ const StnlUser = stnl({
           email: "string",
           age: "i16",
           posts: {
-            items: "f32",
+            item: "f32",
           },
         },
       },
       title: "string",
       published: "bool",
       tags: {
-        items: "string",
+        item: "string",
       },
     },
   },
 });
 const stnlIsUser = build(StnlUser);
+const ArktypeUser = type([{
+  id: "number",
+  author: {
+    name: "string",
+    email: "string",
+    age: "number",
+    posts: ["number"],
+  },
+  title: "string",
+  published: "boolean",
+  tags: ["string"],
+}]);
 
 const usage = [
   {
@@ -76,4 +87,8 @@ Deno.bench("Vali", () => {
 
 Deno.bench("Stnl", () => {
   stnlIsUser(usage);
+});
+
+Deno.bench("Arktype", () => {
+  ArktypeUser(usage);
 });
