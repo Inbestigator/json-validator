@@ -6,151 +6,80 @@ export type ArgTypes =
 
 export type ValiPart =
   | (BaseTypes | OptionalTypes | ArgTypes)
-  | {
-    [key: string]: ValiPart;
-  }
+  | { [key: string]: ValiPart }
   | ValiPart[];
 
-export type Obj =
-  & { isOptional?: boolean }
-  & (
-    | {
-      type: "boolean";
-    }
-    | {
-      min?: number;
-      max?: number;
-    }
-      & (
-        | {
-          type: "string";
-        }
-        | {
-          type: "number";
-        }
-      )
-    | {
-      type: "object";
-      items: { key: string; schema: Obj }[];
-    }
-    | {
-      type: "array";
-      items: Obj[];
-    }
-  );
+type ArgBase<T extends string> = T extends `string${infer Opt}`
+  ? Opt extends "?"
+    ? string | undefined
+    : string
+  : T extends `number${infer Opt}`
+  ? Opt extends "?"
+    ? number | undefined
+    : number
+  : never;
 
-/**
- * Constructs a specialized schema part based on the given base or optional type
- * and its constraints. For "string" or "string?" types, accepts minimum and maximum
- * length constraints. For "number" or "number?" types, accepts minimum and maximum
- * value constraints. Returns a ValiPart string representation of the schema part.
- * @param type - The base or optional type to specialize.
- * @param args - The constraints specific to the type, such as min/max length for strings or min/max value for numbers.
- * @returns A ValiPart string representation of the specialized schema part.
- * @throws Will throw an error if an unexpected type is provided.
- */
-export function specialize<T extends BaseTypes | OptionalTypes>(
+type InferArg<T extends ArgTypes> = T extends `${infer Base}:${string}:${string}`
+  ? ArgBase<Base>
+  : never;
+
+type InferPrimitive<T extends string> = T extends "string"
+  ? string
+  : T extends "number"
+  ? number
+  : T extends "boolean"
+  ? boolean
+  : T extends "string?"
+  ? string | undefined
+  : T extends "number?"
+  ? number | undefined
+  : T extends "boolean?"
+  ? boolean | undefined
+  : T extends "?"
+  ? unknown
+  : T extends ArgTypes
+  ? InferArg<T>
+  : never;
+
+export type Infer<T extends ValiPart> = T extends BaseTypes | OptionalTypes | ArgTypes
+  ? InferPrimitive<T>
+  : T extends ValiPart[]
+  ? Infer<T[number]>[]
+  : // deno-lint-ignore no-explicit-any
+  T extends { [key: string]: any }
+  ? { [K in keyof T]: Infer<T[K]> }
+  : never;
+
+export type Obj = { isOptional?: boolean } & (
+  | { type: "boolean" }
+  | { type: "string"; min?: number; max?: number }
+  | { type: "number"; min?: number; max?: number }
+  | { type: "object"; items: { key: string; schema: Obj }[] }
+  | { type: "array"; items: Obj[] }
+);
+
+export function specialize<T extends "string" | "string?" | "number" | "number?">(
   type: T,
-  args: T extends "string" | "string?" ? {
-      minLength?: number;
-      maxLength?: number;
-    }
-    : T extends "number" | "number?" ? {
-        min?: number;
-        max?: number;
-      }
-    : never,
+  args: T extends "string" | "string?"
+    ? { minLength?: number; maxLength?: number }
+    : T extends "number" | "number?"
+    ? { min?: number; max?: number }
+    : never
 ): ValiPart {
-  switch (type) {
-    case "string?":
-    case "string": {
-      const strArgs = args as {
-        minLength?: number;
-        maxLength?: number;
-      };
-      return `${type as "string" | "string?"}:${strArgs.minLength ?? "?"}:${
-        strArgs.maxLength ?? "?"
-      }`;
-    }
-    case "number?":
-    case "number": {
-      const numArgs = args as {
-        min?: number;
-        max?: number;
-      };
-      return `${type as "number" | "number?"}:${numArgs.min ?? "?"}:${
-        numArgs.max ?? "?"
-      }`;
-    }
-    default:
-      throw new Error("Unexpected type");
-  }
-}
+  let a: number | "?" = "?";
+  let b: number | "?" = "?";
 
-function parseRange(
-  args: string[],
-  defaultMin: number,
-  defaultMax: number,
-): { min?: number; max?: number } {
-  const min = args[1] === "?"
-    ? defaultMin
-    : args[1]
-    ? parseInt(args[1], 10)
-    : undefined;
-  const max = args[2] === "?"
-    ? defaultMax
-    : args[2]
-    ? parseInt(args[2], 10)
-    : undefined;
-  return { min, max };
-}
-
-/**
- * Converts a ValiPart schema definition into an Obj representation.
- * Handles string, array, and object types, and supports optional fields.
- * @param {ValiPart} part - The schema definition which can be a string, array, or object.
- * @returns The converted Obj representation of the schema.
- * @throws Throws an error if an unexpected type is encountered.
- */
-export function createObj(part: ValiPart): Obj {
-  if (typeof part === "string") {
-    const args = part.split(":");
-    let partType = args[0] as BaseTypes;
-    const isOptional = part.endsWith("?");
-
-    if (isOptional) {
-      partType = args[0].slice(0, -1) as BaseTypes;
-    }
-
-    switch (partType) {
-      case "string": {
-        const { min, max } = parseRange(args, 0, Infinity);
-        return { type: "string", isOptional, min, max };
-      }
-      case "number": {
-        const { min, max } = parseRange(args, -Infinity, Infinity);
-        return { type: "number", isOptional, min, max };
-      }
-      case "boolean": {
-        return { type: "boolean", isOptional };
-      }
-      default: {
-        throw new Error("Unexpected type");
-      }
-    }
-  } else if (Array.isArray(part)) {
-    const items: Obj[] = [];
-    part.forEach((p) => {
-      items.push(createObj(p));
-    });
-    return { type: "array", items };
-  } else if (typeof part === "object") {
-    const items: { key: string; schema: Obj }[] = [];
-    for (const key in part) {
-      items.push({ key, schema: createObj(part[key]) });
-    }
-    return { type: "object", items };
+  if (type[0] === "s") {
+    const aNum = (args as { minLength?: number }).minLength;
+    const bNum = (args as { maxLength?: number }).maxLength;
+    if (aNum !== undefined) a = aNum;
+    if (bNum !== undefined) b = bNum;
+  } else {
+    const aNum = (args as { min?: number }).min;
+    const bNum = (args as { max?: number }).max;
+    if (aNum !== undefined) a = aNum;
+    if (bNum !== undefined) b = bNum;
   }
 
-  throw new Error("Unexpected type");
+  return `${type}:${a}:${b}`;
 }
